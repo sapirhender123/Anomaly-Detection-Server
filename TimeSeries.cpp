@@ -1,10 +1,3 @@
-#include <algorithm>
-#include <fstream>
-#include <sstream>  // std::stringstream
-#include <stdexcept>// std::runtime_error
-#include <string>
-#include <utility>// std::pair
-#include <vector>
 
 #include "TimeSeries.h"
 
@@ -24,6 +17,7 @@ void TimeSeries::load_csv() {
         while (std::getline(ss, colname, ',')) { m_features.push_back(colname); }
     }
 
+    m_fields = std::vector<std::vector<float>>(m_features.size());
     while (std::getline(myFile, line)) { parseRow(line); }
     myFile.close();
 }
@@ -52,6 +46,9 @@ void TimeSeries::parseRow(const std::string &newLine) {
     for (auto &m_field : m_fields) {
         ss >> val;
         m_field.push_back(val);
+
+        // If the next token is a comma, ignore it and move on
+        if(ss.peek() == ',') ss.ignore();
     }
 }
 

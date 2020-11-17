@@ -1,6 +1,15 @@
 #ifndef TIMESERIES_H_
 #define TIMESERIES_H_
 
+#include <algorithm>
+#include <fstream>
+#include <sstream>  // std::stringstream
+#include <stdexcept>// std::runtime_error
+#include <string>
+#include <utility>// std::pair
+#include <vector>
+
+
 class TimeSeries {
 
 public:

@@ -1,7 +1,10 @@
 
 #include "TimeSeries.h"
 
-TimeSeries::TimeSeries(const char *CSVfileName) { m_CSVfileName = CSVfileName; }
+TimeSeries::TimeSeries(const char *CSVfileName) {
+    m_CSVfileName = CSVfileName;
+    load_csv();
+}
 
 void TimeSeries::load_csv() {
     std::ifstream myFile(m_CSVfileName);
@@ -52,6 +55,12 @@ void TimeSeries::parseRow(const std::string &newLine) {
     }
 }
 
+//
+//void TimeSeries::addRow(std::string newLine) {
+//
+//
+//}
+
 // Return value at searched when at equals val
 float TimeSeries::getFieldAt(const std::string &searched, const std::string &at, float val) {
     int searched_idx = 0, at_idx = 0;
@@ -67,4 +76,17 @@ float TimeSeries::getFieldAt(const std::string &searched, const std::string &at,
 
     auto val_it = std::find(m_fields[searched_idx].cbegin(), m_fields[searched_idx].cend(), val);
     return m_fields[at_idx][val_it - m_fields[searched_idx].cbegin()];
+}
+
+int TimeSeries::findIndexOfFeature(const std::string& feature, const std::vector<std::string>& vector) const{
+    for (int i=0; i < m_features.size(); ++i) {
+        auto val_it = std::find(m_features.cbegin(), m_features.cend(), feature);
+        int index = -1;
+        if (val_it != vector.end()) {
+            index = val_it - vector.begin();
+        }
+        return index;
+
+    }
+
 }

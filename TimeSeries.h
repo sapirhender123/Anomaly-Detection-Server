@@ -24,6 +24,9 @@ public:
     void load_csv();
     void parseRow(const std::string& newLine);
     float getFieldAt(const std::string &searched, const std::string &at, float val);
+//    void addRow(std::string newLine);
+//    int findIndexOfFeature(std::string feature);
+    int findIndexOfFeature(const std::string& feature, const std::vector<std::string>&) const;
 };
 
 #endif /* TIMESERIES_H_ */

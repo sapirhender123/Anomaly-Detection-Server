@@ -6,7 +6,7 @@
 #define BUILDSTONE1_TIMESERIESANOMALYDETECTOR_H
 
 
-#include "TimeSeries.h"
+#include "timeseries.h"
 #include <vector>
 
 class TimeSeriesAnomalyDetector {

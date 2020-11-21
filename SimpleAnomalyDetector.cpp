@@ -33,7 +33,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
                 arrVec2[i] = ts.m_fields[idx2][i];
             }
             // calculate the pearson between two headers
-            float pearsonCor = abs(pearson(arrVec1, arrVec2, ts.m_fields.size()));
+            float pearsonCor = fabs(pearson(arrVec1, arrVec2, ts.m_fields.size()));
 
             // taking the highest result for correlation ans saving the pair
             if (pearsonCor > maxCor && pearsonCor > threshold) {
@@ -76,7 +76,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
                                                .feature2 = featureJ,
                                                .corrlation = maxCor,
                                                .lin_reg = regLine,
-                                               .threshold = maxDev * 1.1f};
+                                               .threshold = maxDev * 1.11f};
             cf.push_back(cfval);
         }
     }
@@ -108,8 +108,8 @@ vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries &ts) {
             // if it's bigger than the threshold - add to list of reports
             // this report include const string description, const long timeStep (the row of the detection anomaly;
             if (devFronRegLin > cf[i].threshold) {
-                feature1 += " - " + feature2;
-                AnomalyReport report = AnomalyReport(feature1, i + 1);
+                feature1 += "-" + feature2;
+                AnomalyReport report = AnomalyReport(feature1, k + 1);
                 listOfReports.push_back(report);
             }
         }

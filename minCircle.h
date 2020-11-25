@@ -55,7 +55,7 @@ Circle circleFromThree(const Point &A, const Point &B, const Point &C) {
 }
 
 /// Function to return a circle that intersects two points
-Circle circleFromtwo(const Point &A, const Point &B) {
+Circle circleFromTwo(const Point &A, const Point &B) {
     // Set the center to be the midpoint of A and B
     Point C = {(A.x + B.x) / 2, (A.y + B.y) / 2};
 
@@ -80,44 +80,72 @@ Circle findMinCircle(Point **points, size_t size) {
     if (size == 1) {
         return Circle(*points[0], 0);
     }
-    //const int infinity = std::numeric_limits<int>::max();
 
-    // Set initial MEC to have infinity radius
-    Circle mec = { { 0, 0 }, 429496725.0};
+    // Circle from the two first points for start
+    Circle C2 = Circle(Point((points[0]->x + points[1]->x) / 2,
+                                 (points[0]->y + points[1]->y) / 2),
+                           float(dist(*points[0], *points[1]) / 2));
 
-    // Go over all pair of points
-    Circle tmp = {{0, 0}, 0};
-    for (int i = 0; i < size; i++) {
-        for (int j = i + 1; j < size; j++) {
+    Circle tmp = Circle(Point(0, 0), 0);
+    // for all the points, i will check if the point is inside the circle that already calculated in the previous iteration or not.
+    // if yes, I will use it.
+    for (int i = 3; i < size; ++i) {
+        Circle prevC = Circle(Point((points[i-1]->x + points[i-2]->x) / 2,
+                                (points[i-1]->y + points[i-2]->y) / 2),
+                          float(dist(*points[i-1], *points[i-2]) / 2));
+        if (ifInsideCircle(prevC, *points[i])) {
+            tmp = prevC;
+        } else {
+            //solution with one point
+            // for each point from j=2 until size check if it inside the circle
+            // if not, solution with two points - with line...
+        };
 
-            // Get the smallest circle that
-            // intersects P[i] and P[j]
-            tmp = circleFromtwo(*points[i], *points[j]);
-
-            // Update MEC if tmp encloses all points
-            // and has a smaller radius
-
-            if (tmp.radius < mec.radius && ifCircleEnclose(tmp, points, size))
-                mec = tmp;
-        }
     }
 
-    // Go over all triples of points
-    for (int i = 0; i < size; i++) {
-        for (int j = i + 1; j < size; j++) {
-            for (int k = j + 1; k < size; k++) {
 
-                // Get the circle that intersects P[i], P[j], P[k]
-                Circle tmp = circleFromThree(*points[i], *points[j], *points[k]);
 
-                // Update MEC if tmp encloses all points
-                // and has smaller radius
-                if (tmp.radius < mec.radius && ifCircleEnclose(tmp, points, size))
-                    mec = tmp;
-            }
-        }
-    }
-    return mec;
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+
+//    //const int infinity = std::numeric_limits<int>::max();
+//
+//    // Set initial MEC to have infinity radius
+//    Circle mec = { { 0, 0 }, 429496725.0};
+//
+//    // Go over all pair of points
+//    Circle tmp = {{0, 0}, 0};
+//    for (int i = 0; i < size; i++) {
+//        for (int j = i + 1; j < size; j++) {
+//
+//            // Get the smallest circle that
+//            // intersects P[i] and P[j]
+//            tmp = circleFromtwo(*points[i], *points[j]);
+//
+//            // Update MEC if tmp encloses all points
+//            // and has a smaller radius
+//
+//            if (tmp.radius < mec.radius && ifCircleEnclose(tmp, points, size))
+//                mec = tmp;
+//        }
+//    }
+//
+//    // Go over all triples of points
+//    for (int i = 0; i < size; i++) {
+//        for (int j = i + 1; j < size; j++) {
+//            for (int k = j + 1; k < size; k++) {
+//
+//                // Get the circle that intersects P[i], P[j], P[k]
+//                Circle tmp = circleFromThree(*points[i], *points[j], *points[k]);
+//
+//                // Update MEC if tmp encloses all points
+//                // and has smaller radius
+//                if (tmp.radius < mec.radius && ifCircleEnclose(tmp, points, size))
+//                    mec = tmp;
+//            }
+//        }
+//    }
+//    return mec;
 }
 
 

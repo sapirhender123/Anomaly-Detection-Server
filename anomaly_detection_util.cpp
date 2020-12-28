@@ -68,6 +68,13 @@ float dev(Point p, Line l) {
     return val < 0 ? -1 * val : val;
 }
 
+// distance between two points
+float dist(Point a, Point b){
+    float x2=(a.x-b.x)*(a.x-b.x);
+    float y2=(a.y-b.y)*(a.y-b.y);
+    return sqrt(x2+y2);
+}
+
 //
 ///*
 // * animaly_detection_util.cpp

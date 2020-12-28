@@ -19,8 +19,9 @@ public:
 };
 class Point {
 public:
-    const float x, y;
+    float x, y;
     Point(float x, float y) : x(x), y(y) {}
+    Point(): x(0), y(0) {}
 };
 // performs a linear regression and return s the line equation
 Line linear_reg(Point **points, int size);
@@ -28,4 +29,5 @@ Line linear_reg(Point **points, int size);
 float dev(Point p, Point **points, int size);
 // returns the deviation between point p and the line
 float dev(Point p, Line l);
+float dist(Point a, Point b);
 #endif// ANOMALYDETECTORUTIL_H_

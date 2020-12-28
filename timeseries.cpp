@@ -86,7 +86,21 @@ int TimeSeries::findIndexOfFeature(const std::string& feature, const std::vector
             index = val_it - vector.begin();
         }
         return index;
-
     }
 
+    return -1;
 }
+
+Point** TimeSeries::createPointArray(const std::string& feature1, const std::string& feature2) const {
+    // find the index of feature 1 and feature 2
+    int index1 = findIndexOfFeature(feature1, m_features);
+    int index2 = findIndexOfFeature(feature2, m_features);
+
+    auto points = new Point*[m_fields[0].size()];
+    for (int j = 0; j < m_fields[0].size(); j++) {
+        points[j] = new Point(m_fields[index1][j], m_fields[index2][j]);
+    }
+
+    return points;
+}
+

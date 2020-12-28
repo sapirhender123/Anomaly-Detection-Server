@@ -24,6 +24,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
         featureI = "";
         featureJ = "";
         Line regLine;
+        Circle minCircleFromPoints = Circle(Point(0,0), 0);
         for (int idx2 = idx1 + 1; idx2 < ts.m_fields.size(); ++idx2) {
             float arrVec1[ts.m_fields.size()];
             float arrVec2[ts.m_fields.size()];
@@ -35,8 +36,8 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
             // calculate the pearson between two headers
             float pearsonCor = fabs(pearson(arrVec1, arrVec2, ts.m_fields.size()));
 
-            // taking the highest result for correlation ans saving the pair
-            if (pearsonCor > maxCor && pearsonCor > threshold) {
+            // taking the highest result for correlation and saving the pair
+            if (pearsonCor > maxCor && pearsonCor > 0.5) {
                 if (idx1 < idx2) {
                     featureI = ts.m_features[idx1];
                     featureJ = ts.m_features[idx2];
@@ -47,10 +48,11 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
 
                 maxCor = pearsonCor;
 
-                // convert the value of the vectors to array of values according to the function
-                // getFieldAt in Timeseries
+                /* convert the value of the vectors to array of values according to the function
+                 getFieldAt in Timeseries */
                 // create an array of points
-                Point *points[ts.m_fields[0].size()];
+                //Point *points[ts.m_fields[0].size()];
+                auto **points = new Point*[ts.m_fields[0].size()];
                 // check what index is first
                 int xCoord = idx1 < idx2 ? idx1 : idx2;
                 int yCoord = idx1 < idx2 ? idx2 : idx1;
@@ -59,25 +61,40 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
                     points[j] = new Point(ts.m_fields[xCoord][j], ts.m_fields[yCoord][j]);
                 }
 
-                // create linear regression line
-                regLine = linear_reg(points, ts.m_fields[0].size());
+                if (pearsonCor > threshold) {
+                    // create linear regression line
+                    regLine = linear_reg(points, ts.m_fields[0].size());
 
-                // calculate the deviation from the regression line
-                for (int i = 0; i < ts.m_fields[0].size(); i++) {
-                    float devFromLine = dev(*points[i], regLine);
-                    maxDev = devFromLine > maxDev ? devFromLine : maxDev;
+                    // calculate the deviation from the regression line
+                    for (int i = 0; i < ts.m_fields[0].size(); i++) {
+                        float devFromLine = dev(*points[i], regLine);
+                        maxDev = devFromLine > maxDev ? devFromLine : maxDev;
+                    }
+                } else {
+                    minCircleFromPoints = findMinCircle(points, ts.m_fields[0].size());
                 }
             }
         }
 
-        // now I have the max result
+        // Now I have the max result
         if (maxCor > threshold) {
             struct correlatedFeatures cfval = {.feature1 = featureI,
                                                .feature2 = featureJ,
                                                .corrlation = maxCor,
                                                .lin_reg = regLine,
-                                               .threshold = maxDev * 1.11f};
+                                               .threshold = maxDev * 1.11f,
+                                               .minCircle = Circle(Point(0,0),0)};
             cf.push_back(cfval);
+        }
+        // If bigger than 0.5, then save in list of mincircle_cf
+        else if (maxCor > 0.5) {
+            struct correlatedFeatures cf_minCircle = {.feature1 = featureI,
+                                                      .feature2 = featureJ,
+                                                      .corrlation = maxCor,
+                                                      .lin_reg = Line(0,0),
+                                                      .threshold = minCircleFromPoints.radius * 1.1f,
+                                                      .minCircle = minCircleFromPoints};
+            minCircle_cf.push_back(cf_minCircle);
         }
     }
 }
@@ -85,21 +102,12 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
 
 vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries &ts) {
     //create array of points from the rows of correlation features
-    string feature1;
-    string feature2;
     auto listOfReports = std::vector<AnomalyReport>();
+    std::string feature1, feature2;
     for (int i = 0; i < cf.size(); ++i) {
         feature1 = cf[i].feature1;
         feature2 = cf[i].feature2;
-        int index1 = ts.findIndexOfFeature(feature1, ts.m_features);
-        int index2 = ts.findIndexOfFeature(feature2, ts.m_features);
-        //auto points = std::vector<Point>(ts.m_fields[0].size());
-        Point *points[ts.m_fields[0].size()];
-
-        // find the index of feature 1 and feature 2
-        for (int j = 0; j < ts.m_fields[0].size(); j++) {
-            points[j] = new Point(ts.m_fields[index1][j], ts.m_fields[index2][j]);
-        }
+        Point **points = ts.createPointArray(feature1, feature2);
 
         // for each point (relevant according to the correlation features),
         // calculate the distance from the regression line
@@ -108,8 +116,8 @@ vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries &ts) {
             // if it's bigger than the threshold - add to list of reports
             // this report include const string description, const long timeStep (the row of the detection anomaly;
             if (devFronRegLin > cf[i].threshold) {
-                feature1 += "-" + feature2;
-                AnomalyReport report = AnomalyReport(feature1, k + 1);
+                std::string name = feature1 + "-" + feature2;
+                AnomalyReport report = AnomalyReport(name, k + 1);
                 listOfReports.push_back(report);
             }
         }

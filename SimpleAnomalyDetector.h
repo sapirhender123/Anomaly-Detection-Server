@@ -12,6 +12,8 @@
 #include <string.h>
 #include <vector>
 
+#define DEFAULT_THRESHOLD (0.9)
+
 struct correlatedFeatures{
 	string feature1,feature2;  // names of the correlated features
 	float corrlation;
@@ -27,8 +29,11 @@ class SimpleAnomalyDetector:public TimeSeriesAnomalyDetector{
 //    std::map<std::pair<std::string, std::string>, int> m_correlation = {};
 protected:
     vector<correlatedFeatures> minCircle_cf;
+    float m_threshold;
+
 public:
 	SimpleAnomalyDetector();
+    SimpleAnomalyDetector(float t);
 	virtual ~SimpleAnomalyDetector();
 
 	virtual void learnNormal(const TimeSeries & ts);

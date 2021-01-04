@@ -11,9 +11,12 @@
 class HybridAnomalyDetector:public SimpleAnomalyDetector {
 public:
 	HybridAnomalyDetector();
+    HybridAnomalyDetector(float t);
 	~HybridAnomalyDetector() override;
     vector<AnomalyReport> detect(const TimeSeries & ts) override;
     vector<correlatedFeatures> getNormalModel() override;
+//    float getThreshold();
+//    void setThreshold(float threshold);
 };
 
 

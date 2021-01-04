@@ -1,14 +1,11 @@
 
 #include "HybridAnomalyDetector.h"
 
-HybridAnomalyDetector::HybridAnomalyDetector() {
-	// TODO Auto-generated constructor stub
+HybridAnomalyDetector::HybridAnomalyDetector() : SimpleAnomalyDetector() {}
 
-}
+HybridAnomalyDetector::~HybridAnomalyDetector() {}
 
-HybridAnomalyDetector::~HybridAnomalyDetector() {
-	// TODO Auto-generated destructor stub
-}
+HybridAnomalyDetector::HybridAnomalyDetector(float t) : SimpleAnomalyDetector(t) {}
 
 vector<AnomalyReport> HybridAnomalyDetector::detect(const TimeSeries &ts) {
     // detect circles -> vec report
@@ -33,9 +30,9 @@ vector<AnomalyReport> HybridAnomalyDetector::detect(const TimeSeries &ts) {
     }
 
     auto cf_report = SimpleAnomalyDetector::detect(ts);
-    std::copy(cf_report.begin(), cf_report.end(), std::back_inserter(listOfReports));
+    std::copy(listOfReports.begin(), listOfReports.end(), std::back_inserter(cf_report));
 
-    return listOfReports;
+    return cf_report;
 }
 
 vector<correlatedFeatures> HybridAnomalyDetector::getNormalModel() {
@@ -43,5 +40,20 @@ vector<correlatedFeatures> HybridAnomalyDetector::getNormalModel() {
     auto cf = SimpleAnomalyDetector::getNormalModel();
     std::copy(cf.begin(), cf.end(), std::back_inserter(res));
     std::copy(minCircle_cf.begin(), minCircle_cf.end(), std::back_inserter(res));
+
+    for (const auto& x : res) {
+        std::cout
+                << "feature1: " << x.feature1
+                << ", feature2: " << x.feature2
+                << ", corrlation: " << x.corrlation
+                << ", threshold: "  << x.threshold
+                << ", lin_reg.a: " << x.lin_reg.a
+                << ", lin_reg.b: " << x.lin_reg.b
+                << ", minCircle.radius: " << x.minCircle.radius
+                << ", minCircle.center.x: " << x.minCircle.center.x
+                << ", minCircle.center.y: " << x.minCircle.center.y
+                << std::endl;
+    }
+
     return res;
 }

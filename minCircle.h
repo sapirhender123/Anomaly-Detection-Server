@@ -1,25 +1,34 @@
+// 208414573
+#ifndef BUILDSTONE1_MINE_MINCIRCLE_H
+#define BUILDSTONE1_MINE_MINCIRCLE_H
 
-#ifndef MINCIRCLE_H_
-#define MINCIRCLE_H_
-
+#include <array>
 #include <iostream>
+#include <iterator>
+#include <limits>
+#include <random>
 #include <vector>
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
-#include <math.h>
+#include <algorithm>
 #include "anomaly_detection_util.h"
+
 
 using namespace std;
 
-// ------------ DO NOT CHANGE -----------
+//// ------------ DO NOT CHANGE -----------
+//class Point {
+//public:
+//    float x, y;
+//    Point(float x, float y) : x(x), y(y) {}
+//};
 
-class Circle{
+class Circle {
 public:
     Point center;
     float radius;
-    Circle(Point c,float r):center(c),radius(r){}
+    Circle(Point c, float r) : center(c), radius(r) {}
 };
 // --------------------------------------
-
 Circle findMinCircle(Point** points,size_t size);
-#endif /* MINCIRCLE_H_ */
+
+
+#endif//BUILDSTONE1_MINE_MINCIRCLE_H

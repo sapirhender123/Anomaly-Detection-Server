@@ -1,13 +1,13 @@
 
 #include "SimpleAnomalyDetector.h"
 
-SimpleAnomalyDetector::SimpleAnomalyDetector() {
-    // TODO Auto-generated constructor stub
-}
+SimpleAnomalyDetector::SimpleAnomalyDetector() { m_threshold = DEFAULT_THRESHOLD; }
 
 SimpleAnomalyDetector::~SimpleAnomalyDetector() {
     // TODO Auto-generated destructor stub
 }
+
+SimpleAnomalyDetector::SimpleAnomalyDetector(float t) { m_threshold = t; }
 
 #include <iostream>
 
@@ -17,14 +17,13 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
     //    for (auto vector1 : ts.m_fields) {
     string featureI;
     string featureJ;
-    float threshold = 0.9;
     for (int idx1 = 0; idx1 < ts.m_fields.size(); ++idx1) {
         float maxDev = 0;
         float maxCor = 0;
         featureI = "";
         featureJ = "";
         Line regLine;
-        Circle minCircleFromPoints = Circle(Point(0,0), 0);
+        Circle minCircleFromPoints = Circle(Point(0, 0), 0);
         for (int idx2 = idx1 + 1; idx2 < ts.m_fields.size(); ++idx2) {
             float arrVec1[ts.m_fields.size()];
             float arrVec2[ts.m_fields.size()];
@@ -51,8 +50,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
                 /* convert the value of the vectors to array of values according to the function
                  getFieldAt in Timeseries */
                 // create an array of points
-                //Point *points[ts.m_fields[0].size()];
-                auto **points = new Point*[ts.m_fields[0].size()];
+                auto **points = new Point *[ts.m_fields[0].size()];
                 // check what index is first
                 int xCoord = idx1 < idx2 ? idx1 : idx2;
                 int yCoord = idx1 < idx2 ? idx2 : idx1;
@@ -61,7 +59,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
                     points[j] = new Point(ts.m_fields[xCoord][j], ts.m_fields[yCoord][j]);
                 }
 
-                if (pearsonCor > threshold) {
+                if (pearsonCor > m_threshold) {
                     // create linear regression line
                     regLine = linear_reg(points, ts.m_fields[0].size());
 
@@ -70,6 +68,13 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
                         float devFromLine = dev(*points[i], regLine);
                         maxDev = devFromLine > maxDev ? devFromLine : maxDev;
                     }
+
+                    // Handle the situation where the correlation should be a circle but
+                    // the points inside the circle create a line. The deviation will be
+                    // huge so it cannot be a line. :(
+                    if (maxDev > 5.0f) {
+                        minCircleFromPoints = findMinCircle(points, ts.m_fields[0].size());
+                    }
                 } else {
                     minCircleFromPoints = findMinCircle(points, ts.m_fields[0].size());
                 }
@@ -77,13 +82,29 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
         }
 
         // Now I have the max result
-        if (maxCor > threshold) {
+        for (int pos = 0; pos < cf.size(); ++pos) {
+            const auto &c = cf[pos];
+            if ((c.feature1 == featureI || c.feature1 == featureJ) ||
+                (c.feature2 == featureI || c.feature2 == featureJ)) {
+                // already exists in line features, so correlation here is lower
+                // check bigger correlation
+                if (c.corrlation > maxCor) {
+                    goto next;
+                } else {
+                    // Current one has a larger correlation, remove the existing one
+                    cf.erase(cf.begin() + pos);
+                }
+            }
+        }
+
+        if (maxCor > m_threshold && maxDev < 5.0f) {
+            //  todo : function of correlated features
             struct correlatedFeatures cfval = {.feature1 = featureI,
                                                .feature2 = featureJ,
                                                .corrlation = maxCor,
                                                .lin_reg = regLine,
                                                .threshold = maxDev * 1.11f,
-                                               .minCircle = Circle(Point(0,0),0)};
+                                               .minCircle = Circle(Point(0, 0), 0)};
             cf.push_back(cfval);
         }
         // If bigger than 0.5, then save in list of mincircle_cf
@@ -91,11 +112,13 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
             struct correlatedFeatures cf_minCircle = {.feature1 = featureI,
                                                       .feature2 = featureJ,
                                                       .corrlation = maxCor,
-                                                      .lin_reg = Line(0,0),
-                                                      .threshold = minCircleFromPoints.radius * 1.1f,
+                                                      .lin_reg = Line(0, 0),
+                                                      .threshold =
+                                                              minCircleFromPoints.radius * 1.11f,
                                                       .minCircle = minCircleFromPoints};
             minCircle_cf.push_back(cf_minCircle);
         }
+        next:;
     }
 }
 

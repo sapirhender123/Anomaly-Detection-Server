@@ -1,3 +1,4 @@
+// 208414573 Sapir Hender
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
 
@@ -7,6 +8,7 @@
 #include "HybridAnomalyDetector.h"
 #include "timeseries.h"
 #include <fstream>
+#include <netdb.h>
 #include <vector>
 
 #define COMMAND_COUNT (5)
@@ -33,9 +35,7 @@ public:
     virtual void write(float f) = 0;
     virtual void read(float *f) = 0;
     virtual ~DefaultIO() = default;
-    // you may add additional methods here
 };
-
 
 class StandardIO : public DefaultIO {
 public:
@@ -50,11 +50,44 @@ public:
     ~StandardIO() override = default;
 };
 
-//TODO: AFTER WILL BE IMPLEMENTED
-//  class SocketIO: public DefaultIO{
-//  public:
-//
-//  };
+class SocketIO : public DefaultIO {
+    int clientSocket;
+
+public:
+    explicit SocketIO(int clientSocket) : clientSocket(clientSocket) {}
+    string read() override {
+        string res;
+
+        char buf = 0;
+        while (true) {
+            recv(clientSocket, &buf, sizeof(buf), 0);
+            if (buf == '\n') break;
+            res += buf;
+        }
+
+        return res;
+    };
+    void write(string text) override { send(clientSocket, text.data(), text.size(), 0); }
+    void write(float f) override {
+        std::ostringstream ss;
+        ss << f;
+        std::string s(ss.str());
+        send(clientSocket, s.data(), s.size(), 0);
+    }
+    void read(float *f) override {
+        // 1 for float, 1 for \n
+        static char buffer[2]{};
+
+        // For small packets that are sent close to each other, the kernel
+        // may sometimes combine packets in an unwanted manner. For example:
+        // 3\n, 5\n => 3, \n5\n
+        // So wait until 2 bytes are received :)
+        recv(clientSocket, buffer, sizeof(buffer), MSG_WAITALL);
+        std::istringstream ss(buffer);
+        ss >> *f;
+    }
+    ~SocketIO() override = default;
+};
 
 class Command {
 
@@ -66,7 +99,7 @@ public:
     string description;
 
     Command(DefaultIO *dio, CLIData *data) : dio(dio), data(data) {}
-    virtual void execute() = 0; // abstract method
+    virtual void execute() = 0;// abstract method
     virtual ~Command() = default;
 };
 
@@ -201,8 +234,8 @@ public:
 
         int FP = 0;
         int TP = 0;
-        float false_alarm_rate;     // FP / N (= number of time steps without anomalies)
-        float true_positive_rate;   // TP / P (= number ranges in input report file)
+        float false_alarm_rate;  // FP / N (= number of time steps without anomalies)
+        float true_positive_rate;// TP / P (= number ranges in input report file)
 
         int P = 0, N = data->csv_line_count;
 

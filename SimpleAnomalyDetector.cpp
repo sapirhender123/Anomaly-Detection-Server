@@ -14,7 +14,6 @@ SimpleAnomalyDetector::SimpleAnomalyDetector(float t) { m_threshold = t; }
 
 void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
     // calculate the correlation between the pairs, and taking the high correlation
-    //    for (auto vector1 : ts.m_fields) {
     string featureI;
     string featureJ;
     for (int idx1 = 0; idx1 < ts.m_fields.size(); ++idx1) {

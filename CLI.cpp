@@ -28,12 +28,11 @@ void CLI::printOptions() {
 
 void CLI::start() {
     float option = 0;
-    // maybe it should be array of Command**
     do {
         printOptions();
         dio->read(&option);
         if (option > 6) {
-            cout << "illegal choice, try again" << endl;
+            dio->write("illegal choice, try again");
             break;
         }
         classifyOpt(option);
